@@ -1,9 +1,8 @@
 
 
-
 # Load libraries ----------------------------------------------------------
 require(pacman)
-pacman::p_load(rnaturalearthdata, rnaturalearth, SSDM, raster, terra, sf, fs, glue, tidyverse, rgbif, geodata)
+pacman::p_load(rnaturalearthdata, rnaturalearth, cptcity, SSDM, ggspatial, raster, terra, sf, fs, glue, tidyverse, rgbif, geodata)
 
 g <- gc(reset = T)
 rm(list = ls())
@@ -70,5 +69,41 @@ rstr <- terra::rast(rstr)
 rslt <- terra::as.data.frame(rstr, xy = T) %>% as_tibble()
 
 # To make the map ---------------------------------------------------------
+windowsFonts(georg = windowsFont('Georgia'))
+
+gmap <- ggplot() + 
+  geom_tile(data = rslt, aes(x = x, y = y, fill = Projection)) +
+  scale_fill_gradientn(colors = cpt(pal = 'imagej_gyr_centre', n = 10, rev = TRUE)) +
+  geom_sf(data = wrld, fill = NA, col = 'grey40', lwd = 0.2) + 
+  geom_sf(data = st_as_sf(mex1), fill = NA, col = 'grey40', lwd = 0.3) + 
+  coord_sf(xlim = ext(mex1)[1:2], ylim = ext(mex1)[3:4]) + 
+  labs(x = 'Lon', y = 'Lat', fill = 'Puntaje de idoneidad') + 
+  ggtitle(label = 'Idoneidad para la especie Coyol en el país de México', subtitle = 'Modelo Random Forest') +
+  theme_bw() + 
+  theme(text = element_text(family = 'georg', color = 'grey50'), 
+        legend.position = 'bottom', 
+        plot.title = element_text(hjust = 0.5, face = 'bold', color = 'grey30'),
+        plot.subtitle = element_text(hjust = 0.5, face = 'bold', color = 'grey30'),
+        # legend.key.width = unit(3, 'line'),
+        panel.border = element_rect(color = 'grey80')) +
+  guides(fill = guide_legend( 
+    direction = 'horizontal',
+    keyheight = unit(1.15, units = "mm"),
+    keywidth = unit(15, units = "mm"),
+    title.position = 'top',
+    title.hjust = 0.5,
+    label.hjust = .5,
+    nrow = 1,
+    byrow = T,
+    reverse = F,
+    label.position = "bottom"
+  )) + 
+  annotation_scale(location =  "bl", width_hint = 0.5, text_family = 'georg', text_col = 'grey60', bar_cols = c('grey60', 'grey99'), line_width = 0.2) +
+  annotation_north_arrow(location = "tr", which_north = "true", 
+                         pad_x = unit(0.1, "in"), pad_y = unit(0.2, "in"), 
+                         style = north_arrow_fancy_orienteering(text_family = 'georg', text_col = 'grey40', line_col = 'grey60', fill = c('grey60', 'grey99'))) 
+
+ggsave(plot = gmap, filename = 'png/mapa_rf.png', units = 'in', width = 9, height = 7, dpi = 300)
+
 
 
